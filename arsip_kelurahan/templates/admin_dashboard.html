@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #3a56b4;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-bg: #f8f9fc;
+            --dark-bg: #5a5c69;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            padding: 0.75rem 1rem;
+        }
+        
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-link {
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.35rem;
+            margin: 0 0.15rem;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .container {
+            max-width: 1400px;
+            padding: 0 1.5rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .page-title {
+            font-weight: 700;
+            color: var(--dark-bg);
+            margin: 0;
+            font-size: 1.75rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 1.35rem;
+            font-weight: 700;
+            color: var(--dark-bg);
+            border-radius: 0.35rem 0.35rem 0 0 !important;
+        }
+        
+        .stat-card {
+            border-left: 0.25rem solid;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        .stat-card .card-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card .card-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            opacity: 0.7;
+            position: absolute;
+            right: 1.5rem;
+            top: 1.5rem;
+        }
+        
+        .table {
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+        
+        .table thead th {
+            background-color: #f8f9fc;
+            border-bottom-width: 1px;
+            font-weight: 700;
+            color: var(--dark-bg);
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            padding: 1rem 1.25rem;
+        }
+        
+        .table tbody td {
+            padding: 1rem 1.25rem;
+            vertical-align: middle;
+            border-top: 1px solid #f1f3f9;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(78, 115, 223, 0.03);
+        }
+        
+        .badge {
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            font-size: 0.65em;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.2rem;
+        }
+        
+        .alert {
+            border-radius: 0.35rem;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.05);
+        }
+        
+        footer {
+            background-color: #fff;
+            padding: 1.5rem;
+            margin-top: 3rem;
+            box-shadow: 0 -0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            color: #858796;
+            font-size: 0.8rem;
+        }
+        
+        .log-level {
+            display: inline-block;
+            width: 80px;
+            text-align: center;
+            border-radius: 0.2rem;
+            font-weight: 600;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .log-level.info {
+            background-color: rgba(54, 185, 204, 0.1);
+            color: var(--info-color);
+        }
+        
+        .log-level.warning {
+            background-color: rgba(246, 194, 62, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .log-level.error {
+            background-color: rgba(231, 74, 59, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .notification-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35em 0.65em;
+            border-radius: 50px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        
+        .notification-status.read {
+            background-color: rgba(28, 200, 138, 0.1);
+            color: var(--success-color);
+        }
+        
+        .notification-status.unread {
+            background-color: rgba(231, 74, 59, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .empty-state {
+            padding: 2rem;
+            text-align: center;
+            color: #b7b9cc;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .stat-card i {
+                font-size: 1.5rem;
+                top: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+                <i class="bi bi-shield-lock me-2"></i>Admin Panel
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_user_management') }}">
+                            <i class="bi bi-people me-1"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_archive_management') }}">
+                            <i class="bi bi-archive me-1"></i> Archives
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_system_settings') }}">
+                            <i class="bi bi-gear me-1"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' if category == 'warning' else 'info-circle-fill' if category == 'info' else 'x-circle-fill' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+            </h1>
+            <div class="text-muted">Last updated: {{ current_time }}</div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-primary">
+                    <div class="card-body text-white bg-primary">
+                        <div class="card-title">TOTAL USERS</div>
+                        <div class="card-text">{{ dashboard_data.totalUsers | default(0) }}</div>
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-success">
+                    <div class="card-body text-white bg-success">
+                        <div class="card-title">TOTAL ARCHIVES</div>
+                        <div class="card-text">{{ dashboard_data.totalArchives | default(0) }}</div>
+                        <i class="bi bi-archive"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-warning">
+                    <div class="card-body text-white bg-warning">
+                        <div class="card-title">SYSTEM LOGS (7D)</div>
+                        <div class="card-text">{{ dashboard_data.totalLogs | default(0) }}</div>
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-danger">
+                    <div class="card-body text-white bg-danger">
+                        <div class="card-title">UNREAD NOTIFICATIONS</div>
+                        <div class="card-text">{{ dashboard_data.totalNotifications | default(0) }}</div>
+                        <i class="bi bi-bell"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-journal-text me-2"></i>Recent System Logs
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Module</th>
+                                        <th>Level</th>
+                                        <th>Message</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in dashboard_data.recentLogs | default([]) %}
+                                        <tr>
+                                            <td class="text-muted">{{ log.module }}</td>
+                                            <td>
+                                                <span class="log-level {{ log.level | lower }}">{{ log.level }}</span>
+                                            </td>
+                                            <td class="text-truncate" style="max-width: 200px;">{{ log.message }}</td>
+                                            <td class="text-muted small">{{ log.created_at }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="empty-state">
+                                                <i class="bi bi-journal-x"></i>
+                                                <h5>No logs available</h5>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-bell me-2"></i>Recent Notifications
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Message</th>
+                                        <th>Status</th>
+                                        <th>Time</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for notification in dashboard_data.recentNotifications | default([]) %}
+                                        <tr>
+                                            <td class="text-muted">#{{ notification.user_id }}</td>
+                                            <td class="text-truncate" style="max-width: 150px;">{{ notification.message }}</td>
+                                            <td>
+                                                <span class="notification-status {{ 'read' if notification.is_read else 'unread' }}">
+                                                    {{ 'Read' if notification.is_read else 'Unread' }}
+                                                </span>
+                                            </td>
+                                            <td class="text-muted small">{{ notification.created_at }}</td>
+                                            <td>
+                                                {% if not notification.is_read %}
+                                                    <button class="btn btn-sm btn-outline-primary mark-read" data-id="{{ notification.id }}">
+                                                        <i class="bi bi-check-lg"></i> Mark Read
+                                                    </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="empty-state">
+                                                <i class="bi bi-bell-slash"></i>
+                                                <h5>No notifications available</h5>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-0">&copy; {{ current_year }} Archive Management System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.mark-read').forEach(button => {
+            button.addEventListener('click', function() {
+                const notificationId = this.getAttribute('data-id');
+                const button = this;
+                
+                // Show loading state
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing';
+                button.disabled = true;
+                
+                fetch(`/api/notifications/${notificationId}/mark-read`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI without reload
+                        const row = button.closest('tr');
+                        const statusCell = row.querySelector('.notification-status');
+                        statusCell.classList.remove('unread');
+                        statusCell.classList.add('read');
+                        statusCell.textContent = 'Read';
+                        button.remove();
+                        
+                        // Update counter
+                        const counter = document.querySelector('.bg-danger .card-text');
+                        if (counter) {
+                            counter.textContent = parseInt(counter.textContent) - 1;
+                        }
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to mark as read'));
+                        button.innerHTML = '<i class="bi bi-check-lg"></i> Mark Read';
+                        button.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error);
+                    button.innerHTML = '<i class="bi bi-check-lg"></i> Mark Read';
+                    button.disabled = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

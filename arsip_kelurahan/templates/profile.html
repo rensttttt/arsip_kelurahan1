@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Sistem Arsip Digital Kelurahan - Profil Pengguna">
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; media-src 'self'; object-src 'none';">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <title>Profil Pengguna - Sistem Arsip Digital Kelurahan</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/static/icons/favicon.ico" type="image/x-icon">
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/profile.css">
+</head>
+
+<body>
+    <!-- CSRF Token -->
+    <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Kelurahan" class="rounded-circle me-2" width="40" height="40">
+                <span>Arsip Digital Kelurahan</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"><i class="fas fa-home me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/archives"><i class="fas fa-archive me-1"></i> Arsip</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img id="navbarAvatar" src="/static/images/default-avatar.png" alt="Avatar Pengguna" class="rounded-circle me-2" width="30" height="30">
+                            <span id="usernameDisplay">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item active" href="/profile"><i class="fas fa-user me-1"></i> Profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert Container -->
+    <div class="container mt-3">
+        <div id="alertContainer"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        <div class="row g-4">
+            <!-- Left Column -->
+            <div class="col-lg-4">
+                <!-- Profile Card -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i> Profil Saya</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="avatar-container mx-auto mb-3">
+                            <img id="profileAvatar" src="/static/images/default-avatar.png" alt="Avatar Pengguna" class="rounded-circle img-thumbnail" width="150" height="150">
+                            <button class="btn btn-primary avatar-edit-btn" data-bs-toggle="modal" data-bs-target="#avatarModal" aria-label="Ubah Foto Profil">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                        <h4 id="profileName" class="mb-1">Nama Pengguna</h4>
+                        <p class="text-muted mb-3" id="profileRole">Role</p>
+                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                            <i class="fas fa-key me-1"></i> Ubah Password
+                        </button>
+                    </div>
+                    <div class="card-footer bg-light text-muted">
+                        <small><i class="fas fa-calendar-alt me-1"></i> Terdaftar sejak <span id="joinDate">-</span></small>
+                    </div>
+                </div>
+
+                <!-- Account Stats -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Statistik Akun</h5>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-file-alt me-2 text-primary"></i> Arsip Unggahan</span>
+                            <span class="badge bg-primary rounded-pill" id="archiveCount">0</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-comment me-2 text-primary"></i> Komentar</span>
+                            <span class="badge bg-primary rounded-pill" id="commentCount">0</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-check me-2 text-primary"></i> Aktivitas Bulan Ini</span>
+                            <span class="badge bg-primary rounded-pill" id="activityCount">0</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Security Card -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i> Keamanan Akun</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6 class="fw-bold"><i class="fas fa-check-circle me-2 text-primary"></i> Status Akun</h6>
+                            <span id="accountStatus" class="badge bg-success">Aktif</span>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="fw-bold"><i class="fas fa-envelope me-2 text-primary"></i> Email Terverifikasi</h6>
+                            <span id="emailVerified" class="badge bg-success">Ya</span>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="fw-bold"><i class="fas fa-history me-2 text-primary"></i> Login Terakhir</h6>
+                            <p id="lastLogin" class="mb-0">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="fw-bold"><i class="fas fa-laptop me-2 text-primary"></i> Perangkat Aktif</h6>
+                            <p id="activeDevices" class="mb-0">-</p>
+                        </div>
+                        <button class="btn btn-outline-danger w-100" id="logoutAllBtn">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout dari Semua Perangkat
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-8">
+                <!-- Profile Details -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Detail Profil</h5>
+                        <button class="btn btn-light btn-sm" id="editProfileBtn" aria-label="Edit Profil">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label">Nama Depan</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="firstName" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lastName" class="form-label">Nama Belakang</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="lastName" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="email" class="form-label">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="phone" class="form-label">Nomor Telepon</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="phone" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="address" class="form-label">Alamat</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                        <textarea class="form-control" id="address" rows="3" readonly></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="position" class="form-label">Jabatan</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                        <input type="text" class="form-control" id="position" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="department" class="form-label">Departemen</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" class="form-control" id="department" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-end d-none" id="profileFormButtons">
+                                <button type="button" class="btn btn-secondary" id="cancelEditBtn">
+                                    <i class="fas fa-times me-1"></i> Batal
+                                </button>
+                                <button type="submit" class="btn btn-primary ms-2">
+                                    <i class="fas fa-save me-1"></i> Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i> Aktivitas Terakhir</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="activityTimeline" class="ps-3">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Memuat...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-laptop me-2"></i> Sesi Aktif</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="sessionsList">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Memuat...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Avatar Modal -->
+    <div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="avatarModalLabel"><i class="fas fa-camera me-2"></i> Ubah Foto Profil</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="avatarForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <img id="avatarPreview" src="/static/images/default-avatar.png" alt="Pratinjau Avatar" class="rounded-circle img-thumbnail" width="200" height="200">
+                        </div>
+                        <div class="mb-3">
+                            <label for="avatarInput" class="form-label"><i class="fas fa-image me-1"></i> Pilih Gambar</label>
+                            <input class="form-control" type="file" id="avatarInput" accept="image/jpeg,image/png" required>
+                            <small class="form-text"><i class="fas fa-info-circle me-1"></i> Format: JPEG atau PNG (maks. 2MB)</small>
+                        </div>
+                        <div class="alert alert-danger d-none" id="avatarError"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Batal
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        b>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="passwordModalLabel"><i class="fas fa-key me-2"></i> Ubah Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="passwordForm" autocomplete="off">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Password Saat Ini</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Toggle visibilitas password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Password Baru</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="newPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Toggle visibilitas password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="form-text"><i class="fas fa-info-circle me-1"></i> Minimal 8 karakter, mengandung huruf besar, kecil, angka, dan simbol</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Konfirmasi Password Baru</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" aria-label="Toggle visibilitas password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-danger d-none" id="passwordError"></div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Setelah mengubah password, Anda akan logout dari semua perangkat.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Batal
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-key me-1"></i> Ubah Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-archive me-2"></i> Sistem Arsip Digital Kelurahan</h5>
+                    <p class="mb-0">Solusi terpadu untuk manajemen dokumen dan arsip digital.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5><i class="fas fa-link me-2"></i> Tautan Cepat</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/dashboard" class="text-white"><i class="fas fa-home me-1"></i> Dashboard</a></li>
+                        <li><a href="/archives" class="text-white"><i class="fas fa-archive me-1"></i> Arsip Saya</a></li>
+                        <li><a href="/profile" class="text-white"><i class="fas fa-user me-1"></i> Profil Saya</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5><i class="fas fa-question-circle me-2"></i> Bantuan</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white"><i class="fas fa-book me-1"></i> Panduan Pengguna</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-shield-alt me-1"></i> Kebijakan Privasi</a></li>
+                        <li><a href="#" class="text-white"><i class="fas fa-envelope me-1"></i> Hubungi Admin</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row">
+               (identifier: "col-md-6")>
+                <p class="mb-0">© 2023 Sistem Arsip Digital Kelurahan. Hak cipta dilindungi.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0">Versi 1.0.0</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+<script src="/public/js/profile.js"></script>
+</body>
+</html>

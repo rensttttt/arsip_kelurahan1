@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f5f6f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        .navbar {
+            background-color: #2c3e50;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .search-bar .form-control {
+            min-width: 200px;
+        }
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 500;
+        }
+        .table th {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        .status-badge.active {
+            color: #28a745;
+            font-weight: 500;
+        }
+        .status-badge.inactive {
+            color: #dc3545;
+            font-weight: 500;
+        }
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .pagination {
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+        .btn-loading {
+            position: relative;
+        }
+        .btn-loading:disabled {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Main navigation">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+                <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Admin Panel
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1" aria-hidden="true"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_user_management') }}" aria-current="page">
+                            <i class="bi bi-people me-1" aria-hidden="true"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_archive_management') }}">
+                            <i class="bi bi-archive me-1" aria-hidden="true"></i> Archives
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_system_settings') }}">
+                            <i class="bi bi-gear me-1" aria-hidden="true"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' if category == 'warning' else 'info-circle-fill' if category == 'info' else 'x-circle-fill' }} me-2" aria-hidden="true"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-people me-2" aria-hidden="true"></i>User Management
+            </h1>
+            <div class="search-bar">
+                <form method="GET" action="{{ url_for('admin_user_management') }}" class="input-group" role="search">
+                    <input type="text" name="q" class="form-control" placeholder="Cari pengguna..." value="{{ pagination.search_query | default('') }}" aria-label="Search users">
+                    <button class="btn btn-primary" type="submit" aria-label="Search">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-{{ 'pencil' if form.user_id.data else 'plus' }} me-2" aria-hidden="true"></i>
+                {{ 'Edit Pengguna' if form.user_id.data else 'Tambah Pengguna Baru' }}
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_user_management') }}" class="needs-validation" novalidate id="user-form">
+                    {{ form.csrf_token }}
+                    {% if form.user_id.data %}
+                        <input type="hidden" name="user_id" value="{{ form.user_id.data }}">
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ form.username.data | default('') }}" pattern="[a-zA-Z0-9_]{4,80}" 
+                                   minlength="4" maxlength="80" required aria-describedby="usernameHelp">
+                            <div class="invalid-feedback">Username harus 4-80 karakter, hanya huruf, angka, atau underscore.</div>
+                            <small id="usernameHelp" class="form-text text-muted">Hanya huruf, angka, dan underscore.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ form.email.data | default('') }}" required aria-describedby="emailHelp">
+                            <div class="invalid-feedback">Masukkan alamat email yang valid.</div>
+                            <small id="emailHelp" class="form-text text-muted">Contoh: nama@domain.com</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="full_name" class="form-label">Nama Lengkap</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="{{ form.full_name.data | default('') }}" maxlength="255" required>
+                            <div class="invalid-feedback">Nama lengkap diperlukan (maks 255 karakter).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="phone" class="form-label">Telepon (Opsional)</label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   value="{{ form.phone.data | default('') }}" maxlength="20" pattern="[0-9+()-]{0,20}">
+                            <div class="invalid-feedback">Nomor telepon tidak valid (maks 20 karakter).</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" 
+                                       {% if form.is_admin.data %}checked{% endif %} aria-describedby="is_adminHelp">
+                                <label class="form-check-label" for="is_admin">Pengguna Admin</label>
+                                <small id="is_adminHelp" class="form-text text-muted">Beri hak admin.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_superadmin" name="is_superadmin" 
+                                       {% if form.is_superadmin.data %}checked{% endif %} aria-describedby="is_superadminHelp">
+                                <label class="form-check-label" for="is_superadmin">Superadmin</label>
+                                <small id="is_superadminHelp" class="form-text text-muted">Hanya untuk pengguna terpercaya.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                       {% if form.is_active.data %}checked{% endif %} aria-describedby="is_activeHelp">
+                                <label class="form-check-label" for="is_active">Pengguna Aktif</label>
+                                <small id="is_activeHelp" class="form-text text-muted">Aktifkan akun pengguna.</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-{{ 'check-lg' if form.user_id.data else 'plus-lg' }} me-1" aria-hidden="true"></i>
+                            {{ 'Perbarui Pengguna' if form.user_id.data else 'Buat Pengguna' }}
+                        </button>
+                        
+                        {% if not form.user_id.data %}
+                            <small class="text-muted">Kata sandi sementara akan dibuat untuk pengguna baru.</small>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-list-ul me-2" aria-hidden="true"></i>Daftar Pengguna
+                </div>
+                <div class="text-muted">
+                    Menampilkan {{ users | length }} dari {{ pagination.total }} pengguna
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover" aria-label="User list">
+                    <thead>
+                        <tr>
+                            <th scope="col">Pengguna</th>
+                            <th scope="col">Kontak</th>
+                            <th scope="col">Peran</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Dibuat</th>
+                            <th scope="col">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users | default([]) %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar" aria-hidden="true">
+                                            {{ user.full_name | first | upper }}
+                                        </div>
+                                        <div>
+                                            <strong>{{ user.username }}</strong>
+                                            <div class="text-muted small">{{ user.full_name }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>{{ user.email }}</div>
+                                    <div class="text-muted small">{{ user.phone | default('Tidak ada telepon') }}</div>
+                                </td>
+                                <td>
+                                    {% if user.is_superadmin %}
+                                        <span class="badge bg-danger">Superadmin</span>
+                                    {% elif user.is_admin %}
+                                        <span class="badge bg-warning text-dark">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Reguler</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge {{ 'active' if user.is_active else 'inactive' }}">
+                                        <i class="bi bi-{{ 'check-circle' if user.is_active else 'x-circle' }} me-1" aria-hidden="true"></i>
+                                        {{ 'Aktif' if user.is_active else 'Nonaktif' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="small text-muted">{{ user.created_at | datetimeformat('dd MMM yyyy HH:mm') }}</div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('admin_user_management', user_id=user.id) }}" class="btn btn-sm btn-outline-primary" aria-label="Edit user {{ user.username }}">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                                        </a>
+                                        <form method="POST" action="{{ url_for('admin_user_management') }}" class="delete-form" style="display:inline;">
+                                            {{ form.csrf_token }}
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Apakah Anda yakin ingin menghapus pengguna {{ user.username }}?')" 
+                                                    aria-label="Delete user {{ user.username }}">
+                                                <i class="bi bi-trash me-1" aria-hidden="true"></i> Hapus
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <i class="bi bi-people" aria-hidden="true"></i>
+                                    <h5>Tidak ada pengguna ditemukan</h5>
+                                    <p>Tambahkan pengguna pertama Anda menggunakan formulir di atas</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if pagination.pages > 1 %}
+                <nav aria-label="User list pagination">
+                    <ul class="pagination">
+                        {% if pagination.page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin_user_management', page=pagination.page-1, q=pagination.search_query) }}" aria-label="Previous page">
+                                    <span aria-hidden="true">«</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% for p in range(1, pagination.pages + 1) %}
+                            <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                                <a class="page-link" href="{{ url_for('admin_user_management', page=p, q=pagination.search_query) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                        {% if pagination.page < pagination.pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin_user_management', page=pagination.page+1, q=pagination.search_query) }}" aria-label="Next page">
+                                    <span aria-hidden="true">»</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-0">© {{ current_year }} Archive Management System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation
+        (function () {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+
+        // Delete button loading state
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                const deleteButton = form.querySelector('button[type="submit"]');
+                if (deleteButton && form.checkValidity()) {
+                    deleteButton.classList.add('btn-loading');
+                    deleteButton.disabled = true;
+                    deleteButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menghapus...';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

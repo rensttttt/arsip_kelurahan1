@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log - Arsip Kelurahan{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Riwayat Aktivitas</h1>
+        <div>
+            <span class="text-muted">Logged in as: {{ user.username }}</span>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Filter Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('activity') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="action_filter" class="form-label">Filter Aktivitas</label>
+                    <select name="action_filter" id="action_filter" class="form-select">
+                        <option value="">Semua Aktivitas</option>
+                        {% for action in valid_actions %}
+                            <option value="{{ action }}" {% if action == action_filter %}selected{% endif %}>
+                                {{ action | capitalize }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 align-self-end">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activity Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Daftar Aktivitas Pengguna</h5>
+        </div>
+        <div class="card-body">
+            {% if activities %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Tanggal</th>
+                                <th scope="col">Aktivitas</th>
+                                <th scope="col">Deskripsi</th>
+                                <th scope="col">Dokumen</th>
+                                <th scope="col">IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in activities %}
+                                <tr>
+                                    <td>{{ activity.created_at }}</td>
+                                    <td>{{ activity.action | capitalize }}</td>
+                                    <td>{{ activity.description | default('Tidak ada deskripsi', true) }}</td>
+                                    <td>{{ activity.archive_title | default('-', true) }}</td>
+                                    <td>{{ activity.ip_address }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center">Tidak ada aktivitas yang ditemukan.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+        <nav aria-label="Activity pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- Previous Button -->
+                <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" 
+                       href="{% if current_page > 1 %}{{ url_for('activity', page=current_page-1, action_filter=action_filter) }}{% else %}#{% endif %}" 
+                       aria-label="Previous">
+                        <span aria-hidden="true">« Sebelumnya</span>
+                    </a>
+                </li>
+                <!-- Page Numbers -->
+                {% for page_num in range(1, total_pages + 1) %}
+                    {% if page_num == current_page %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% elif page_num >= current_page - 2 and page_num <= current_page + 2 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('activity', page=page_num, action_filter=action_filter) }}">{{ page_num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                <!-- Next Button -->
+                <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" 
+                       href="{% if current_page < total_pages %}{{ url_for('activity', page=current_page+1, action_filter=action_filter) }}{% else %}#{% endif %}" 
+                       aria-label="Next">
+                        <span aria-hidden="true">Berikutnya »</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<!-- CSRF Token for AJAX requests -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss flash messages after 5 seconds
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+            }, 5000);
+        });
+    });
+</script>
+{% endblock %}

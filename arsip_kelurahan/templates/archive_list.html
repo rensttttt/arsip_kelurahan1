@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+
+{% block title %}Daftar Arsip - Arsip Digital Kelurahan{% endblock %}
+
+{% block head %}
+  <!-- Preload necessary resources -->
+  <link rel="preload" href="{{ url_for('static', filename='js/archive.js') }}" as="script">
+  <link rel="preload" href="{{ url_for('static', filename='js/search.js') }}" as="script">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/archive.css') }}">
+  <style>
+    /* Custom styles specific to this page */
+    .archive-container {
+      background-color: #f8fafc;
+      min-height: calc(100vh - 120px);
+    }
+    
+    .page-header {
+      background: linear-gradient(135deg, #f6f9fc 0%, #eef2f6 100%);
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .filter-card {
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .archive-list-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .archive-list-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    
+    .table-responsive {
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    
+    .table th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      color: #64748b;
+    }
+    
+    .table td {
+      vertical-align: middle;
+      padding: 1rem;
+    }
+    
+    .badge-category {
+      font-weight: 500;
+      padding: 0.35em 0.65em;
+      border-radius: 6px;
+      background-color: #e0e7ff;
+      color: #4f46e5;
+      font-size: 0.75rem;
+    }
+    
+    .action-buttons .btn {
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    
+    /* Loading animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      background-color: #f8fafc;
+      border-radius: 12px;
+    }
+    
+    .empty-state i {
+      font-size: 3.5rem;
+      color: #cbd5e1;
+      margin-bottom: 1.5rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .page-header {
+        padding: 1.25rem;
+      }
+      
+      .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+      }
+      
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="archive-container py-4">
+  <div class="container">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="row mb-4">
+          <div class="col-12">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+          <div class="mb-3 mb-md-0">
+            <h1 class="h2 mb-2 fw-bold text-gray-800">
+              <i class="bi bi-archive me-2"></i>Daftar Arsip
+            </h1>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                  <a href="{{ url_for('dashboard') }}" class="text-decoration-none">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                  </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Arsip</li>
+              </ol>
+            </nav>
+          </div>
+          <a href="{{ url_for('archive_upload') }}" class="btn btn-primary d-flex align-items-center">
+            <i class="bi bi-plus-lg me-2"></i>Arsip Baru
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card filter-card border-0">
+          <div class="card-body p-4">
+            <form id="searchForm" method="GET" action="{{ url_for('archive_list') }}" class="row g-3 align-items-end">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+              <div class="col-md-5">
+                <label for="searchInput" class="form-label fw-medium text-gray-700">Cari Arsip</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-gray-500"></i></span>
+                  <input
+                    type="search"
+                    class="form-control border-start-0"
+                    id="searchInput"
+                    name="query"
+                    value="{{ query }}"
+                    placeholder="Cari berdasarkan judul..."
+                    aria-label="Cari arsip"
+                    autocomplete="off"
+                  >
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <label for="categoryFilter" class="form-label fw-medium text-gray-700">Kategori</label>
+                <select class="form-select" id="categoryFilter" name="category">
+                  <option value="">Semua Kategori</option>
+                  {% for category in categories %}
+                    <option value="{{ category }}" {% if category == category %}selected{% endif %}>
+                      {{ {'document': 'Dokumen', 'image': 'Gambar', 'other': 'Lainnya'}[category] }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-2">
+                <label for="dateFilter" class="form-label fw-medium text-gray-700">Periode</label>
+                <select class="form-select" id="dateFilter" name="date_range">
+                  <option value="">Semua Waktu</option>
+                  <option value="today" {% if date_range == 'today' %}selected{% endif %}>Hari Ini</option>
+                  <option value="week" {% if date_range == 'week' %}selected{% endif %}>Minggu Ini</option>
+                  <option value="month" {% if date_range == 'month' %}selected{% endif %}>Bulan Ini</option>
+                  <option value="year" {% if date_range == 'year' %}selected{% endif %}>Tahun Ini</option>
+                </select>
+              </div>
+
+              <div class="col-md-2 d-flex">
+                <button type="submit" class="btn btn-primary w-100 d-flex align-items-center justify-content-center">
+                  <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Archive List Section -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card archive-list-card border-0">
+          <div class="card-header bg-white border-bottom-0 py-3 px-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+              <div class="d-flex align-items-center mb-2 mb-md-0">
+                <h5 class="mb-0 fw-semibold text-gray-800">
+                  <i class="bi bi-list-ul me-2"></i>Daftar Arsip
+                </h5>
+                <span class="ms-3 badge bg-primary-soft text-primary rounded-pill" id="resultCount">
+                  {{ archives|length }} Arsip
+                </span>
+              </div>
+              
+              <div class="d-flex">
+                <div class="dropdown me-2">
+                  <button
+                    class="btn btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    id="sortDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i class="bi bi-sort-down me-1"></i> Urutkan
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="sortDropdown">
+                    <li><a class="dropdown-item sort-option {% if sort == 'newest' %}active{% endif %}" href="?sort=newest{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}" data-sort="newest"><i class="bi bi-arrow-down me-2"></i>Terbaru</a></li>
+                    <li><a class="dropdown-item sort-option {% if sort == 'oldest' %}active{% endif %}" href="?sort=oldest{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}" data-sort="oldest"><i class="bi bi-arrow-up me-2"></i>Terlama</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item sort-option {% if sort == 'title_asc' %}active{% endif %}" href="?sort=title_asc{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}" data-sort="title_asc"><i class="bi bi-sort-alpha-down me-2"></i>A-Z</a></li>
+                    <li><a class="dropdown-item sort-option {% if sort == 'title_desc' %}active{% endif %}" href="?sort=title_desc{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}" data-sort="title_desc"><i class="bi bi-sort-alpha-up me-2"></i>Z-A</a></li>
+                  </ul>
+                </div>
+                
+                <div class="dropdown">
+                  <button
+                    class="btn btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    id="viewDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i class="bi bi-layout-text-sidebar me-1"></i> Tampilan
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="viewDropdown">
+                    <li><a class="dropdown-item view-option active" href="#" data-view="table"><i class="bi bi-table me-2"></i>Tabel</a></li>
+                    <li><a class="dropdown-item view-option" href="#" data-view="grid"><i class="bi bi-grid me-2"></i>Grid</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body p-0">
+            <!-- Table View (Default) -->
+            <div class="table-responsive" id="tableView">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col" class="ps-4" width="35%">Judul</th>
+                    <th scope="col" width="15%">Kategori</th>
+                    <th scope="col" width="20%">Nama File</th>
+                    <th scope="col" width="15%">Tanggal Upload</th>
+                    <th scope="col" width="15%" class="text-end pe-4">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="archiveTable">
+                  {% if archives %}
+                    {% for archive in archives %}
+                    <tr class="fade-in">
+                      <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-file-earmark-text fs-4 text-primary me-3"></i>
+                          <div>
+                            <h6 class="mb-0">{{ archive.title }}</h6>
+                            <small class="text-muted">{{ archive.file_type|upper }} • {{ archive.file_size }}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge-category">{{ {'document': 'Dokumen', 'image': 'Gambar', 'other': 'Lainnya'}[archive.category] }}</span>
+                      </td>
+                      <td>{{ archive.file_name }}</td>
+                      <td>{{ archive.created_at }}</td>
+                      <td class="text-end pe-4">
+                        <div class="action-buttons">
+                          <a href="{{ url_for('archive_download', archive_id=archive.id) }}"
+                             class="btn btn-sm btn-outline-success me-2"
+                             aria-label="Unduh {{ archive.title }}">
+                            <i class="bi bi-download me-1"></i>Unduh
+                          </a>
+                          <a href="{{ url_for('archive_detail', archive_id=archive.id) }}"
+                             class="btn btn-sm btn-outline-primary me-2"
+                             aria-label="Lihat {{ archive.title }}">
+                            <i class="bi bi-eye me-1"></i>Lihat
+                          </a>
+                          <button class="btn btn-sm btn-outline-danger delete-btn"
+                                  data-id="{{ archive.id }}"
+                                  data-title="{{ archive.title }}"
+                                  aria-label="Hapus {{ archive.title }}">
+                            <i class="bi bi-trash me-1"></i>Hapus
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="5" class="text-center py-5">
+                        <div class="empty-state">
+                          <i class="bi bi-folder-x"></i>
+                          <h5 class="mt-3 mb-1">Tidak Ada Arsip</h5>
+                          <p class="text-muted">Belum ada arsip yang tersedia. Coba periksa filter atau tambah arsip baru.</p>
+                          <a href="{{ url_for('archive_upload') }}" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-lg me-1"></i>Tambah Arsip
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Grid View (Hidden by default) -->
+            <div class="d-none" id="gridView">
+              <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 p-4">
+                {% if archives %}
+                  {% for archive in archives %}
+                  <div class="col fade-in">
+                    <div class="card h-100 border-0 shadow-sm">
+                      <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                          <i class="bi bi-file-earmark-text fs-2 text-primary me-3"></i>
+                          <div>
+                            <h5 class="card-title mb-1">{{ archive.title }}</h5>
+                            <span class="badge-category">{{ {'document': 'Dokumen', 'image': 'Gambar', 'other': 'Lainnya'}[archive.category] }}</span>
+                          </div>
+                        </div>
+                        <div class="card-text">
+                          <p class="mb-1"><small class="text-muted">Nama File: {{ archive.file_name }}</small></p>
+                          <p class="mb-1"><small class="text-muted">Tipe: {{ archive.file_type|upper }}</small></p>
+                          <p class="mb-2"><small class="text-muted">Ukuran: {{ archive.file_size }}</small></p>
+                          <p class="mb-3"><small class="text-muted">Upload: {{ archive.created_at }}</small></p>
+                        </div>
+                      </div>
+                      <div class="card-footer bg-white border-top-0 pt-0 pb-3 px-3">
+                        <div class="d-flex justify-content-between">
+                          <a href="{{ url_for('archive_detail', archive_id=archive.id) }}" 
+                             class="btn btn-sm btn-outline-primary"
+                             aria-label="Lihat {{ archive.title }}">
+                            <i class="bi bi-eye me-1"></i>Lihat
+                          </a>
+                          <button class="btn btn-sm btn-outline-danger delete-btn"
+                                  data-id="{{ archive.id }}"
+                                  data-title="{{ archive.title }}"
+                                  aria-label="Hapus {{ archive.title }}">
+                            <i class="bi bi-trash me-1"></i>Hapus
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="col-12">
+                    <div class="empty-state">
+                      <i class="bi bi-folder-x"></i>
+                      <h5 class="mt-3 mb-1">Tidak Ada Arsip</h5>
+                      <p class="text-muted">Belum ada arsip yang tersedia. Coba periksa filter atau tambah arsip baru.</p>
+                      <a href="{{ url_for('archive_upload') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-lg me-1"></i>Tambah Arsip
+                      </a>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          {% if total_pages > 1 %}
+          <div class="card-footer bg-white border-top-0 py-3">
+            <nav aria-label="Navigasi halaman arsip">
+              <ul class="pagination justify-content-center mb-0">
+                <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+                  <a class="page-link" 
+                     href="{% if current_page > 1 %}?page={{ current_page-1 }}&sort={{ sort }}{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}{% else %}#{% endif %}" 
+                     aria-label="Sebelumnya">
+                    <span aria-hidden="true">«</span>
+                  </a>
+                </li>
+                {% set max_pages = 5 %}
+                {% set start_page = [1, current_page - 2]|max %}
+                {% set end_page = [total_pages, current_page + 2]|min %}
+                {% if start_page > 1 %}
+                  <li class="page-item"><a class="page-link" href="?page=1&sort={{ sort }}{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}">1</a></li>
+                  {% if start_page > 2 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                  {% endif %}
+                {% endif %}
+                {% for p in range(start_page, end_page + 1) %}
+                  <li class="page-item {% if p == current_page %}active{% endif %}" aria-current="{% if p == current_page %}page{% endif %}">
+                    {% if p == current_page %}
+                      <span class="page-link">{{ p }}</span>
+                    {% else %}
+                      <a class="page-link" href="?page={{ p }}&sort={{ sort }}{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}">{{ p }}</a>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+                {% if end_page < total_pages %}
+                  {% if end_page < total_pages - 1 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                  {% endif %}
+                  <li class="page-item"><a class="page-link" href="?page={{ total_pages }}&sort={{ sort }}{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}">{{ total_pages }}</a></li>
+                {% endif %}
+                <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                  <a class="page-link" 
+                     href="{% if current_page < total_pages %}?page={{ current_page+1 }}&sort={{ sort }}{% if query %}&query={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_range %}&date_range={{ date_range }}{% endif %}{% else %}#{% endif %}" 
+                     aria-label="Selanjutnya">
+                    <span aria-hidden="true">»</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Archive Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title" id="previewModalLabel">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <span id="previewModalTitle">Pratinjau Arsip</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body" id="previewContent">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Memuat...</span>
+          </div>
+          <p class="mt-2 text-muted">Sedang memuat pratinjau...</p>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i>Tutup
+        </button>
+        <a href="#" class="btn btn-primary" id="downloadBtn">
+          <i class="bi bi-download me-1"></i>Unduh
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Konfirmasi Hapus
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus arsip <strong id="deleteArchiveTitle"></strong>?</p>
+        <div class="alert alert-warning mt-3">
+          <i class="bi bi-exclamation-circle me-2"></i>
+          <small>Data yang dihapus tidak dapat dikembalikan. Pastikan arsip ini tidak lagi diperlukan.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i>Batal
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1"></i>Ya, Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/archive.js') }}"></script>
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+
+<script>
+// View toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle between table and grid views
+  const viewOptions = document.querySelectorAll('.view-option');
+  const tableView = document.getElementById('tableView');
+  const gridView = document.getElementById('gridView');
+  
+  viewOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      const viewType = this.getAttribute('data-view');
+      
+      // Update active state
+      viewOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Show selected view
+      if (viewType === 'table') {
+        tableView.classList.remove('d-none');
+        gridView.classList.add('d-none');
+      } else if (viewType === 'grid') {
+        tableView.classList.add('d-none');
+        gridView.classList.remove('d-none');
+      }
+      
+      // Save preference to localStorage
+      localStorage.setItem('archiveViewPreference', viewType);
+    });
+  });
+  
+  // Load saved view preference
+  const savedView = localStorage.getItem('archiveViewPreference') || 'table';
+  document.querySelector(`.view-option[data-view="${savedView}"]`).click();
+
+  // Sort option active state
+  const sortOptions = document.querySelectorAll('.sort-option');
+  sortOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      sortOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+});
+</script>
+{% endblock %}

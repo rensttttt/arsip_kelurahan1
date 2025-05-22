@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}Unggah Arsip - Arsip Digital Kelurahan{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
+  <style>
+    .upload-container {
+      background-color: #f8f9fc;
+      min-height: calc(100vh - 120px);
+    }
+    .dropzone {
+      border: 2px dashed #4f46e5;
+      border-radius: 12px;
+      background: #fff;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .dropzone:hover {
+      background-color: #f0f4ff;
+    }
+    .dropzone .dz-message {
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+    .dropzone.dz-drag-hover {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .dz-preview {
+      display: none !important;
+    }
+    #fileInfo {
+      padding: 1rem;
+      transition: all 0.3s ease;
+    }
+    .file-input-label {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background-color: #4f46e5;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .file-input-label:hover {
+      background-color: #4338ca;
+    }
+    #manualUpload {
+      display: none;
+    }
+    .btn-primary {
+      background-color: #4f46e5;
+      border-color: #4f46e5;
+    }
+    .btn-primary:hover {
+      background-color: #4338ca;
+      border-color: #4338ca;
+    }
+    .btn-outline-secondary {
+      color: #6b7280;
+      border-color: #6b7280;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #f3f4f6;
+    }
+    .btn-remove {
+      background-color: #ef4444;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .btn-remove:hover {
+      background-color: #dc2626;
+    }
+    .alert {
+      position: relative;
+      z-index: 1000;
+    }
+    .error-border {
+      border-color: #dc2626;
+    }
+    @media (max-width: 768px) {
+      .dropzone {
+        padding: 1rem;
+      }
+      .form-control, .form-select, .btn {
+        font-size: 0.9rem;
+      }
+      .dz-message i {
+        font-size: 2rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container py-4">
+  <div class="container">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="row mb-4">
+          <div class="col-12">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+          <div class="mb-3 mb-md-0">
+            <h1 class="h2 mb-2 fw-bold text-gray-800">
+              <i class="bi bi-cloud-upload me-2"></i>Unggah Arsip
+            </h1>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                  <a href="{{ url_for('dashboard') }}" class="text-decoration-none">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                  </a>
+                </li>
+                <li class="breadcrumb-item">
+                  <a href="{{ url_for('archive_list') }}" class="text-decoration-none">Arsip</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Unggah</li>
+              </ol>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-0">
+          <div class="card-body p-4">
+            <form id="uploadForm" method="POST" action="{{ url_for('archive_upload') }}" enctype="multipart/form-data">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+              <!-- Dropzone -->
+              <div class="dropzone" id="archiveDropzone">
+                <div class="dz-message">
+                  <i class="bi bi-cloud-arrow-up fs-3 mb-2"></i><br>
+                  <span class="d-block mb-2">Tarik dan lepas file di sini atau</span>
+                  <label for="manualUpload" class="file-input-label">
+                    <i class="bi bi-folder2-open me-2"></i>Pilih File
+                  </label>
+                  <input type="file" id="manualUpload" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                  <div class="mt-2">
+                    <small class="text-muted">Format: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX (Maks 10MB)</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- File Info -->
+              <div id="fileInfo" class="alert alert-info mb-4 d-flex justify-content-between align-items-center" style="display: none;">
+                <div>
+                  <i class="bi bi-file-earmark me-2"></i>
+                  <span id="fileName"></span> (<span id="fileSize"></span>)
+                </div>
+                <button type="button" id="removeFileBtn" class="btn-remove">
+                  <i class="bi bi-trash me-1"></i>Hapus
+                </button>
+              </div>
+
+              <!-- Metadata -->
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="title" class="form-label fw-medium">Judul Arsip <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="title" name="title" required maxlength="255" aria-describedby="titleHelp">
+                  <div id="titleHelp" class="form-text">Masukkan judul yang deskriptif untuk arsip ini (maksimal 255 karakter)</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="category" class="form-label fw-medium">Kategori <span class="text-danger">*</span></label>
+                  <select class="form-select" id="category" name="category" required aria-describedby="categoryHelp">
+                    <option value="" disabled selected>Pilih Kategori</option>
+                    {% for category in categories %}
+                      <option value="{{ category }}">{{ {'document': 'Dokumen', 'image': 'Gambar', 'other': 'Lainnya'}[category] }}</option>
+                    {% endfor %}
+                  </select>
+                  <div id="categoryHelp" class="form-text">Pilih kategori yang sesuai dengan jenis arsip</div>
+                </div>
+                <div class="col-12">
+                  <label for="description" class="form-label fw-medium">Deskripsi</label>
+                  <textarea class="form-control" id="description" name="description" rows="4" maxlength="500" aria-describedby="descriptionHelp"></textarea>
+                  <div id="descriptionHelp" class="form-text">Deskripsi singkat tentang isi arsip (maksimal 500 karakter)</div>
+                </div>
+                <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_public" name="is_public">
+                    <label class="form-check-label" for="is_public">
+                      Arsip Publik (dapat diakses oleh semua warga)
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="submitBtn" enabled>
+                  <i class="bi bi-save me-2"></i>Simpan Arsip
+                </button>
+                <a href="{{ url_for('archive_list') }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-x-lg me-2"></i>Batal
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Dropzone
+    Dropzone.autoDiscover = false;
+
+    const dropzone = new Dropzone('#archiveDropzone', {
+      url: '{{ url_for("archive_upload") }}',
+      paramName: 'file',
+      maxFiles: 1,
+      maxFilesize: 10, // MB
+      acceptedFiles: '.pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx',
+      addRemoveLinks: false,
+      autoProcessQueue: false,
+      init: function() {
+        this.on('addedfile', function(file) {
+          if (this.files.length > 1) {
+            this.removeFile(this.files[0]);
+          }
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          if (file.size > 10 * 1024 * 1024) {
+            showAlert('danger', 'Ukuran file terlalu besar (maksimal 10MB)');
+            this.removeFile(file);
+            checkFormValidity();
+            return;
+          }
+          const extension = file.name.split('.').pop().toLowerCase();
+          const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'];
+          if (!allowedExtensions.includes(extension)) {
+            showAlert('danger', 'Jenis file tidak didukung. Hanya PDF, JPG, PNG, DOC, DOCX, XLS, XLSX yang diperbolehkan.');
+            this.removeFile(file);
+            checkFormValidity();
+            return;
+          }
+          updateFileInfo(file.name, fileSizeMB + ' MB');
+          checkFormValidity();
+        });
+
+        this.on('removedfile', function() {
+          resetFileInfo();
+          checkFormValidity();
+        });
+
+        this.on('error', function(file, errorMessage) {
+          showAlert('danger', errorMessage);
+          this.removeFile(file);
+          checkFormValidity();
+        });
+      }
+    });
+
+    // Manual file input handler
+    const manualUpload = document.getElementById('manualUpload');
+    manualUpload.addEventListener('change', function(e) {
+      if (this.files.length > 0) {
+        const file = this.files[0];
+        if (dropzone.files.length > 0) {
+          dropzone.removeFile(dropzone.files[0]);
+        }
+        dropzone.addFile(file);
+      }
+    });
+
+    // Remove file button
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    removeFileBtn.addEventListener('click', function() {
+      if (dropzone.files.length > 0) {
+        dropzone.removeFile(dropzone.files[0]);
+      }
+      manualUpload.value = '';
+      resetFileInfo();
+      checkFormValidity();
+    });
+
+    // Input listeners for title, category, and description
+    const titleInput = document.getElementById('title');
+    const categorySelect = document.getElementById('category');
+    const descriptionTextarea = document.getElementById('description');
+    const submitBtn = document.getElementById('submitBtn');
+
+    titleInput.addEventListener('input', checkFormValidity);
+    categorySelect.addEventListener('change', checkFormValidity);
+    descriptionTextarea.addEventListener('input', checkFormValidity);
+
+    // Check form validity
+    function checkFormValidity() {
+      const title = titleInput.value.trim();
+      const category = categorySelect.value;
+      const description = descriptionTextarea.value.trim();
+      const hasFile = dropzone.files.length > 0;
+
+      // Reset error borders
+      titleInput.classList.remove('error-border');
+      categorySelect.classList.remove('error-border');
+      descriptionTextarea.classList.remove('error-border');
+
+      let isValid = true;
+
+      if (!title) {
+        isValid = false;
+      }
+      if (!category) {
+        isValid = false;
+      }
+      if (description.length > 500) {
+        isValid = false;
+        showAlert('danger', 'Deskripsi maksimal 500 karakter');
+        descriptionTextarea.classList.add('error-border');
+      }
+      if (!hasFile) {
+        isValid = false;
+      }
+
+      submitBtn.disabled = !isValid;
+    }
+
+    // Update file info display
+    function updateFileInfo(name, size) {
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const fileSize = document.getElementById('fileSize');
+      fileInfo.style.display = 'flex';
+      fileName.textContent = name;
+      fileSize.textContent = size;
+    }
+
+    // Reset file info
+    function resetFileInfo() {
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const fileSize = document.getElementById('fileSize');
+      fileInfo.style.display = 'none';
+      fileName.textContent = '';
+      fileSize.textContent = '';
+    }
+
+    // Form submission
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Validate form
+      const title = titleInput.value.trim();
+      const category = categorySelect.value;
+      const description = descriptionTextarea.value.trim();
+      const hasFile = dropzone.files.length > 0;
+
+      // Reset error borders
+      titleInput.classList.remove('error-border');
+      categorySelect.classList.remove('error-border');
+      descriptionTextarea.classList.remove('error-border');
+
+      let isValid = true;
+
+      if (!title) {
+        showAlert('danger', 'Judul arsip wajib diisi');
+        titleInput.classList.add('error-border');
+        isValid = false;
+      }
+
+      if (!category) {
+        showAlert('danger', 'Kategori wajib dipilih');
+        categorySelect.classList.add('error-border');
+        isValid = false;
+      }
+
+      if (description.length > 500) {
+        showAlert('danger', 'Deskripsi maksimal 500 karakter');
+        descriptionTextarea.classList.add('error-border');
+        isValid = false;
+      }
+
+      if (!hasFile) {
+        showAlert('danger', 'Silakan pilih file terlebih dahulu');
+        isValid = false;
+      }
+
+      if (isValid) {
+        this.submit(); // Kirim formulir jika semua validasi lolos
+      }
+    });
+
+    // Show alert
+    function showAlert(type, message) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+      alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+      `;
+      const container = document.querySelector('.upload-container .container');
+      container.insertBefore(alertDiv, container.firstChild);
+      setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => alertDiv.remove(), 150);
+      }, 5000);
+    }
+  });
+</script>
+{% endblock %}
