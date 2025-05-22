@@ -16,10 +16,10 @@ class Config:
     ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'}
 
     # Konfigurasi Database
-    DB_HOST = os.environ.get('DB_HOST', 'localhost')
-    DB_USER = os.environ.get('DB_USER', 'root')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
-    DB_NAME = os.environ.get('DB_NAME', 'arsip2')
+    DB_HOST = os.environ.get('DB_HOST', 'database_host')
+    DB_USER = os.environ.get('DB_USER', 'database_user')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD', 'database_password')
+    DB_NAME = os.environ.get('DB_NAME', 'database_name')
 
     # Konfigurasi Email (gunakan environment variable)
     MAIL_SERVER = 'smtp.gmail.com'
