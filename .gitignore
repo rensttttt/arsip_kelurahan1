@@ -1,0 +1,68 @@
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs and debug files
+*.log
+logs/
+*.sqlite3
+instance/
+*.pid
+
+# Flask & Werkzeug default
+*.db
+*.bak
+*.swp
+*.swo
+
+# Env files (jangan upload kredensial)
+.env
+.env.*
+
+# Compiled files
+*.so
+
+# Test coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+
+# Mypy & Pylint
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Jupyter notebook checkpoints (jika ada)
+.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Docker (jika pakai)
+*.tar
+*.img
+*.container

@@ -1,0 +1,81 @@
+[project]
+name = "arsip-flask"
+version = "0.1.0"
+description = "A web-based digital archive management system for village office document management built with Python Flask"
+authors = [
+    {name = "sandikodev", email = "androxoss@hotmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "flask>=2.3.3",
+    "flask-sqlalchemy>=3.0.5",
+    "flask-migrate>=4.0.5",
+    "flask-login>=0.6.3",
+    "flask-wtf>=1.2.1",
+    "flask-mail>=0.10.0",
+    "flask-mailman>=1.0.0",
+    "flask-limiter>=3.5.0",
+    "flask-talisman>=1.1.0",
+    "sqlalchemy>=2.0.35",
+    "alembic>=1.16.1",
+    "gunicorn>=23.0.0",
+    "psycopg[binary]>=3.2.9",
+    "pillow>=10.1.0",
+    "python-dotenv>=1.0.1",
+    "python-magic>=0.4.27",
+    "pyjwt>=2.9.0",
+    "redis>=5.1.1",
+    "structlog>=24.4.0",
+    "slixmpp>=1.8.4",
+    "bleach>=6.1.0",
+    "rich>=13.9.4",
+    "pytz (>=2025.2,<2026.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)",
+    "mysql-connector-python (==8.0.32)",
+    "email-validator (>=2.2.0,<3.0.0)",
+    "flask-babel (>=4.0.0,<5.0.0)"
+]
+
+[tool.poetry]
+name = "arsip-flask"
+version = "0.1.0"
+description = "A web-based digital archive management system for village office document management built with Python Flask"
+authors = ["sandikodev <androxoss@hotmail.com>"]
+readme = "README.md"
+packages = [{include = "arsip_flask"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^2.3.3"
+flask-sqlalchemy = "^3.0.5"
+flask-migrate = "^4.0.5"
+flask-login = "^0.6.3"
+flask-wtf = "^1.2.1"
+flask-mail = "^0.10.0"
+flask-mailman = "^1.0.0"
+flask-limiter = "^3.5.0"
+flask-talisman = "^1.1.0"
+sqlalchemy = "^2.0.35"
+alembic = "^1.16.1"
+gunicorn = "^23.0.0"
+psycopg = {extras = ["binary"], version = "^3.2.9"}
+pillow = "^10.1.0"
+python-dotenv = "^1.0.1"
+python-magic = "^0.4.27"
+pyjwt = "^2.9.0"
+redis = "^5.1.1"
+structlog = "^24.4.0"
+slixmpp = "^1.8.4"
+bleach = "^6.1.0"
+rich = "^13.9.4"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+black = "^23.0.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
