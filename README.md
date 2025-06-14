@@ -157,7 +157,7 @@ Lihat roadmap lengkap di dokumen `Tab Project Repository`, namun ringkasnya:
 ---
 
 
-# Stage
+## Stage
 |     Environment     |      Tujuan        |   Keterangan                       |
 |---------------------|--------------------|------------------------------------|
 | development         | Coding harian      | Debug aktif, DB lokal              |
@@ -165,7 +165,9 @@ Lihat roadmap lengkap di dokumen `Tab Project Repository`, namun ringkasnya:
 | testing             | Unit test / CI     | Isolasi otomatis                   |
 | production          | Live user          | Aman, cepat, tanpa debug           |
 
-# Package & Dependency Manager
+## Package & Dependency Manager
+> Keterangan mengapa kita menggunakan poetry (stage: development) sedangkan pip (stage: release)
+
 | Fitur / Alat                       | `pip`                  | `poetry`                         | `npm` (Node.js)                                 |
 | ---------------------------------- | ---------------------- | -------------------------------- | ----------------------------------------------- |
 | Bahasa Target                      | Python                 | Python                           | JavaScript / Node.js                            |
@@ -180,19 +182,20 @@ Lihat roadmap lengkap di dokumen `Tab Project Repository`, namun ringkasnya:
 | Cocok untuk Proyek Skala Besar     | ⚠️ Perlu tambahan alat | ✅ Sangat cocok                   | ✅ Ya                                            |
 
 
-# Production (disarankan menggunakan pip)
+## Production (disarankan menggunakan pip)
 ```yml
-# Flask Configuration
+# .env
 FLASK_ENV=production
 FLASK_APP=flask
 FLASK_DEBUG=0
 ```
 ```bash
+#!/bin/sh
 poetry add gunicorn
 poetry run gunicorn -w 4 -b 0.0.0.0:5000 'arsip_flask:create_app()'
 ```
 
-# Reproduce (disarankan menggunakan poetry daripada pip)
+## Reproduce (disarankan menggunakan poetry daripada pip)
 ```bash
 dev@isp:~/arsip_app$ poetry shell
 Creating virtualenv arsip-flask in /home/dev/arsip_app/.venv
