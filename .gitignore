@@ -34,7 +34,6 @@ instance/
 
 # Env files (jangan upload kredensial)
 .env
-.env.*
 
 # Compiled files
 *.so

@@ -183,19 +183,124 @@ Lihat roadmap lengkap di dokumen `Tab Project Repository`, namun ringkasnya:
 
 
 ## Production (disarankan menggunakan pip)
+### untuk production wajib inisiasi .env
 ```yml
 # .env
 FLASK_ENV=production
 FLASK_APP=flask
 FLASK_DEBUG=0
 ```
+### contoh test manual
 ```bash
 #!/bin/sh
 poetry add gunicorn
 poetry run gunicorn -w 4 -b 0.0.0.0:5000 'arsip_flask:create_app()'
 ```
+### cek venv apakah sudah benar
+```bash
+dev@isp:~/arsip_kelurahan1$ poetry shell
+Creating virtualenv arsip-flask in /home/dev/arsip_kelurahan1/.venv
+Spawning shell within /home/dev/arsip_kelurahan1/.venv
+. /home/dev/arsip_kelurahan1/.venv/bin/activate
+dev@isp:~/arsip_kelurahan1$ . /home/dev/arsip_kelurahan1/.venv/bin/activate
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ which python
+/home/dev/arsip_kelurahan1/.venv/bin/python
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ poetry env info
 
-## Reproduce (disarankan menggunakan poetry daripada pip)
+Virtualenv
+Python:         3.12.3
+Implementation: CPython
+Path:           /home/dev/arsip_kelurahan1/.venv
+Executable:     /home/dev/arsip_kelurahan1/.venv/bin/python
+Valid:          True
+
+Base
+Platform:   linux
+OS:         posix
+Python:     3.12.3
+Path:       /home/dev/.pyenv/versions/3.12.3
+Executable: /home/dev/.pyenv/versions/3.12.3/bin/python3.12
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ poetry env info --path
+/home/dev/arsip_kelurahan1/.venv
+```
+
+### install dependensi
+```bash
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ poetry install
+Installing dependencies from lock file
+
+Package operations: 70 installs, 0 updates, 0 removals
+  - Installing slixmpp (1.10.0)
+  - Installing redis (5.3.0)
+  - Installing structlog (24.4.0)
+
+Installing the current project: arsip-flask (0.1.0)
+```
+### membuat dan menjalankan supervisor
+```bash
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ vim /etc/supervisor/conf.d/arsip_app.conf
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ sudo supervisorctl reread
+arsip_app: disappeared
+arsip_kelurahan1: available
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ sudo supervisorctl update
+arsip_app: stopped
+sudo supervisorctl restart arsip_app
+```
+
+### menggunakan [Akses Tunnel](https://github.com/konxc/akses) untuk membuat Zero Trust [Cloudflare Tunnel](https://github.com/cloudflare/cloudflared)
+#### [Akses Tunnel](https://github.com/konxc/akses)
+```bash
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ auto-tunnel-config.sh 
+🚀 Cloudflare Tunnel Auto Configuration
+======================================
+
+📋 Pilih tunnel yang akan dikonfigurasi:
+  1) bun-tracker (ID: 8d409de4...)
+  2) core (ID: d6895009...)
+  3) devel_home (ID: ddfa7b46...)
+  4) project-arsip (ID: c8e8dc0b...)
+  5) 🆕 Buat tunnel baru
+
+Pilih nomor (1-5): 4
+⚠️  Konfigurasi tunnel 'project-arsip' sudah ada!
+
+Detail konfigurasi:
+  Tunnel ID: c8e8dc0b-178e-4719-8ab4-ff3cdf08b4b2
+  Hostname: hostname:
+  Service: 
+  Config file: /home/dev/.cloudflared/config.yml
+
+Untuk melihat config lengkap: cat /home/dev/.cloudflared/config.yml
+Untuk menjalankan tunnel: cloudflared tunnel run project-arsip
+Untuk mengupdate config: hapus file /home/dev/.cloudflared/config.yml dan jalankan script ini lagi
+```
+#### [Cloudflare Tunnel](https://github.com/cloudflare/cloudflared)
+```bash
+(arsip-flask-py3.12) dev@isp:~/arsip_kelurahan1$ cloudflared tunnel run project-arsip
+2025-06-15T06:41:24Z INF Starting tunnel tunnelID=c8e8dc0b-178e-4719-8ab4-ff3cdf08b4b2
+2025-06-15T06:41:24Z INF Version 2025.6.0 (Checksum 173276e3370f366493fb818ebe33cca23a9601d721ca3c03085b3f838eaf3ca9)
+2025-06-15T06:41:24Z INF GOOS: linux, GOVersion: go1.24.2, GoArch: amd64
+2025-06-15T06:41:24Z INF Settings: map[cred-file:/home/dev/.cloudflared/c8e8dc0b-178e-4719-8ab4-ff3cdf08b4b2.json credentials-file:/home/dev/.cloudflared/c8e8dc0b-178e-4719-8ab4-ff3cdf08b4b2.json loglevel:info proto-loglevel:info transport-loglevel:info]
+2025-06-15T06:41:24Z INF cloudflared will not automatically update if installed by a package manager.
+2025-06-15T06:41:24Z INF Generated Connector ID: ac56ed0d-32dd-4b53-8932-ef799721a121
+2025-06-15T06:41:24Z INF Initial protocol quic
+2025-06-15T06:41:24Z INF ICMP proxy will use 192.168.88.12 as source for IPv4
+2025-06-15T06:41:24Z INF ICMP proxy will use fe80::a00:27ff:fee2:7d75 in zone enp0s3 as source for IPv6
+2025-06-15T06:41:24Z WRN The user running cloudflared process has a GID (group ID) that is not within ping_group_range. You might need to add that user to a group within that range, or instead update the range to encompass a group the user is already in by modifying /proc/sys/net/ipv4/ping_group_range. Otherwise cloudflared will not be able to ping this network error="Group ID 1000 is not between ping group 1 to 0"
+2025-06-15T06:41:24Z WRN ICMP proxy feature is disabled error="cannot create ICMPv4 proxy: Group ID 1000 is not between ping group 1 to 0 nor ICMPv6 proxy: socket: permission denied"
+2025-06-15T06:41:24Z INF ICMP proxy will use 192.168.88.12 as source for IPv4
+2025-06-15T06:41:24Z INF ICMP proxy will use fe80::a00:27ff:fee2:7d75 in zone enp0s3 as source for IPv6
+2025-06-15T06:41:24Z INF Starting metrics server on 127.0.0.1:20241/metrics
+2025-06-15T06:41:24Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(25497) CurveP256] connIndex=0 event=0 ip=198.41.200.13
+2025/06/15 13:41:24 failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 7168 kiB, got: 416 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+2025-06-15T06:41:25Z INF Registered tunnel connection connIndex=0 connection=ebd25406-abac-4485-a9d2-6c2cc5b8bd78 event=0 ip=198.41.200.13 location=sin13 protocol=quic2025-06-15T06:41:25Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(25497) CurveP256] connIndex=1 event=0 ip=198.41.192.67
+2025-06-15T06:41:26Z INF Registered tunnel connection connIndex=1 connection=c038d5ec-0dc5-4637-b3ad-c1a6aea7f736 event=0 ip=198.41.192.67 location=sin17 protocol=quic2025-06-15T06:41:26Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(25497) CurveP256] connIndex=2 event=0 ip=198.41.200.73
+2025-06-15T06:41:27Z INF Registered tunnel connection connIndex=2 connection=cc42a588-b518-45ad-8df8-511004da7b2c event=0 ip=198.41.200.73 location=sin02 protocol=quic2025-06-15T06:41:27Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(25497) CurveP256] connIndex=3 event=0 ip=198.41.192.77
+2025-06-15T06:41:28Z INF Registered tunnel connection connIndex=3 connection=23d9276c-4f60-4eba-abbe-467482cf1166 event=0 ip=198.41.192.77 location=sin17 protocol=quic
+```
+---
+
+## Reproduce atau development (disarankan menggunakan poetry daripada pip)
 ```bash
 dev@isp:~/arsip_app$ poetry shell
 Creating virtualenv arsip-flask in /home/dev/arsip_app/.venv
